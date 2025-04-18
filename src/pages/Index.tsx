@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ChatHeader } from "@/components/ChatHeader";
 import { ChatInput } from "@/components/ChatInput";
@@ -22,7 +21,7 @@ const Index = () => {
   ]);
 
   const handleSendMessage = (message: string) => {
-    // Add user message
+    // Add user message to chat
     setMessages((prev) => [
       ...prev,
       {
@@ -33,24 +32,44 @@ const Index = () => {
       },
     ]);
 
-    // Placeholder for API integration
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: prev.length + 1,
-          text: "I'll connect to your FastAPI backend soon to provide real medical assistance. For now, I'm just a placeholder response.",
-          isBot: true,
-          timestamp: new Date().toLocaleTimeString(),
-        },
-      ]);
-    }, 1000);
+    // Call FastAPI backend
+    fetch("http://localhost:8000/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: message }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: prev.length + 1,
+            text: data.answer || "Sorry, I couldn't find an answer.",
+            isBot: true,
+            timestamp: new Date().toLocaleTimeString(),
+          },
+        ]);
+      })
+      .catch((err) => {
+        console.error("API error:", err);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: prev.length + 1,
+            text: "Oops! Something went wrong with the chatbot.",
+            isBot: true,
+            timestamp: new Date().toLocaleTimeString(),
+          },
+        ]);
+      });
   };
 
   return (
     <div className="flex flex-col h-screen max-w-3xl mx-auto bg-gray-50">
       <ChatHeader />
-      
+
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <ChatMessage
